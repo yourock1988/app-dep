@@ -1,0 +1,50 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ['master']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout код
+        uses: actions/checkout@v4
+
+      - name: Установка Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Сборка проекта
+        run: npm run build
+
+      - name: Добавляем .nojekyll
+        run: touch ./dist/.nojekyll
+
+      - name: Настраиваем GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Загружаем артефакт
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
+      - name: Деплоим на GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
